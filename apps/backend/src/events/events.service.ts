@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import { Event, EventStatus } from './event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { GuestsService } from '../guests/guests.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event)
     private eventsRepository: Repository<Event>,
+    private guestsService: GuestsService,
   ) {}
 
   async create(createEventDto: CreateEventDto, userId: string): Promise<Event> {
@@ -58,5 +60,33 @@ export class EventsService {
     const event = await this.findOne(id, userId);
     event.status = status;
     return await this.eventsRepository.save(event);
+  }
+
+  async submitRsvp(eventId: string, rsvpData: any): Promise<any> {
+    const event = await this.eventsRepository.findOne({ where: { id: eventId } });
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+
+    // Create guest record from RSVP data
+    const guestData = {
+      name: rsvpData.name,
+      email: rsvpData.email,
+      phone: rsvpData.phone || null,
+      numberOfGuests: rsvpData.numberOfGuests || 1,
+      mealPreference: rsvpData.mealPreference || null,
+      songRequest: rsvpData.songRequest || null,
+      message: rsvpData.message || null,
+      eventId: eventId,
+      status: rsvpData.attending === 'yes' ? 'confirmed' : 'declined',
+    };
+
+    const guest = await this.guestsService.create(guestData);
+    
+    return {
+      success: true,
+      message: 'RSVP submitted successfully',
+      guest: guest,
+    };
   }
 } 

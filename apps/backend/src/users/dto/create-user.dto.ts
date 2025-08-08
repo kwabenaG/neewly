@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../user.entity';
 
@@ -29,4 +29,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   clerkId?: string;
+
+  @ApiProperty({ description: 'Email verification status', required: false, default: false })
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean;
 } 
